@@ -1092,9 +1092,9 @@
               </div>
             </div>
             
-            <div class="quiz-controls" style="text-align: center; margin-top: 20px;">
+            <div class="quiz-controls" style="display: flex; justify-content: center; gap: 12px; margin-top: 20px;">
               <button class="quiz-btn" id="check-new-words-answer-btn">Check Answer</button>
-              <button class="quiz-btn" id="next-new-words-btn" style="margin-left: 10px;">Next Word</button>
+              <button class="quiz-btn" id="next-new-words-btn">Next Word</button>
             </div>
             
             <div class="quiz-feedback" id="new-words-quiz-feedback" style="max-width: 600px; margin: 20px auto;"></div>
@@ -1907,20 +1907,23 @@
       const activeFilter = document.querySelector('.filter.active');
       const selectedCategory = activeFilter.getAttribute('data-category');
       
-      // Filter words
+      // Filter words — only show words with a Vietnamese translation
       const filteredWords = koreanDictionary.filter(word => {
+        // Must have a Vietnamese translation
+        if (!word.translation || !word.translation.trim()) return false;
+
         // Check if matches search term
-        const matchesSearch = 
-          !searchTerm || 
+        const matchesSearch =
+          !searchTerm ||
           word.korean.toLowerCase().includes(searchTerm) ||
           word.pronunciation.toLowerCase().includes(searchTerm) ||
           word.translation.toLowerCase().includes(searchTerm);
-        
+
         // Check if matches category
-        const matchesCategory = 
+        const matchesCategory =
           selectedCategory === 'All' ||
           word.categories.includes(selectedCategory);
-        
+
         return matchesSearch && matchesCategory;
       });
       
@@ -3512,40 +3515,12 @@
 
     // Add a grammar explanation map for each structure
     const grammarExplanations = {
-      "Present Tense": "Present tense: verb stem + -아요/-어요. Example: 먹다 → 먹어요 (eat)",
-      "Past Tense": "Past tense: verb stem + -았어요/-었어요. Example: 가다 → 갔어요 (went)",
-      "Future Tense": "Future tense: verb stem + -ㄹ/을 거예요. Example: 가다 → 갈 거예요 (will go)",
-      "Negation": "Negation: 안 + verb or verb stem + -지 않아요. Example: 안 먹어요 (don't eat)",
-      "Questions": "Questions: add a question word or ?. Example: 어디에 가요? (Where are you going?)"
+      "Present Tense": "Present tense (Thì hiện tại): Subject + verb (add -s/-es for he/she/it). Example: I study English. / She drinks milk.",
+      "Past Tense": "Past tense (Thì quá khứ): Subject + verb-ed (or irregular form). Example: I ate breakfast. / He went home.",
+      "Future Tense": "Future tense (Thì tương lai): Subject + will + verb. Example: I will call you. / She will study tomorrow.",
+      "Negation": "Negation (Phủ định): Subject + don't/doesn't + verb. Example: I don't like coffee. / He doesn't eat meat.",
+      "Questions": "Questions (Câu hỏi): Use question words (where/what/when/why/how) + do/does + subject + verb. Example: Where do you live?"
     };
-
-    function showGrammarLesson() {
-      // Pick a new quiz
-      currentQuizIndex = getNextQuizIndex();
-      const quiz = sentenceQuizBank[currentQuizIndex];
-      // Show grammar structure/point as a heading
-      document.getElementById('grammar-title').textContent = quiz.grammar;
-      // Show grammar explanation if available
-      document.getElementById('grammar-content').innerHTML = grammarExplanations[quiz.grammar] || '';
-      document.getElementById('sentence-prompt').textContent = quiz.prompt;
-      // Shuffle word bank every time
-      const shuffled = quiz.words.slice().sort(() => Math.random() - 0.5);
-      const wordBank = document.getElementById('word-bank');
-      wordBank.innerHTML = '';
-      shuffled.forEach((word, idx) => {
-        const wordElement = document.createElement('div');
-        wordElement.className = 'word-item';
-        wordElement.textContent = word;
-        wordElement.onclick = function() {
-          // Move word to answer area
-          addWordToSentence(word, idx);
-          wordElement.style.visibility = 'hidden';
-        };
-        wordBank.appendChild(wordElement);
-      });
-      document.getElementById('sentence-construction').innerHTML = '';
-      document.getElementById('sentence-feedback').style.display = 'none';
-    }
 
     function addWordToSentence(word, idx) {
       const construction = document.getElementById('sentence-construction');
@@ -3553,90 +3528,19 @@
       wordElement.className = 'word-item';
       wordElement.textContent = word;
       wordElement.onclick = function() {
-        // Remove word from answer area and make it visible again in word bank
         construction.removeChild(wordElement);
         document.getElementById('word-bank').children[idx].style.visibility = 'visible';
       };
       construction.appendChild(wordElement);
     }
 
-    document.getElementById('check-sentence-btn').onclick = function() {
-      const construction = document.getElementById('sentence-construction');
-      const userSentence = Array.from(construction.children)
-        .map(word => word.textContent)
-        .join(' ');
-      const quiz = sentenceQuizBank[currentQuizIndex];
-      const correctSentence = quiz.correct;
-      const feedback = document.getElementById('sentence-feedback');
-      if (userSentence === correctSentence) {
-        feedback.className = 'sentence-feedback correct';
-        feedback.textContent = 'Correct! Well done!';
-        userStreak++;
-      } else {
-        feedback.className = 'sentence-feedback incorrect';
-        feedback.textContent = `Incorrect. The correct sentence is: ${correctSentence}`;
-        userStreak--;
-      }
-      feedback.style.display = 'block';
-      // Show per-word explanation and translation
-      let explainDiv = document.getElementById('sentence-explanation');
-      if (!explainDiv) {
-        explainDiv = document.createElement('div');
-        explainDiv.id = 'sentence-explanation';
-        feedback.parentNode.insertBefore(explainDiv, feedback.nextSibling);
-      }
-      explainDiv.innerHTML = `<div style='margin-top:10px;'><b>Translation:</b> ${quiz.translation || ''}</div>`;
-      if (quiz.wordExplanations) {
-        explainDiv.innerHTML += `<div style='margin-top:5px;'><b>Word breakdown:</b><ul style='margin:5px 0 0 20px;'>${quiz.wordExplanations.map(w => `<li>${w}</li>`).join('')}</ul></div>`;
-      }
-    };
-
-    document.getElementById('clear-sentence-btn').onclick = function() {
-      document.getElementById('sentence-construction').innerHTML = '';
-      // Make all word bank words visible again
-      Array.from(document.getElementById('word-bank').children).forEach(el => el.style.visibility = 'visible');
-      document.getElementById('sentence-feedback').style.display = 'none';
-    };
-
-    document.getElementById('next-sentence-btn').onclick = function() {
-      showGrammarLesson();
-    };
-
-    // Add grammar option to study options
-    document.querySelector('.study-options').innerHTML += `
+    // Add Grammar & Sentences card to study options
+    document.querySelector('.study-options').insertAdjacentHTML('beforeend', `
       <div class="study-card" onclick="showSection('grammar')">
         <h3>Grammar & Sentences</h3>
-        <p>Learn Korean grammar and practice making sentences</p>
+        <p>Learn English grammar and practice making sentences</p>
       </div>
-    `;
-
-    // Update showSection function to handle grammar section
-    function showSection(section) {
-      // Hide all study containers
-      document.querySelector('.flashcard-container').style.display = 'none';
-      document.querySelector('.quiz-container').style.display = 'none';
-      document.querySelector('.writing-container').style.display = 'none';
-      document.querySelector('.grammar-container').style.display = 'none';
-      document.querySelector('.study-options').style.display = 'none';
-
-      // Show the selected section
-      if (section === 'flashcard') {
-        document.querySelector('.flashcard-container').style.display = 'block';
-      } else if (section === 'quiz') {
-        document.querySelector('.quiz-container').style.display = 'block';
-      } else if (section === 'writing') {
-        document.querySelector('.writing-container').style.display = 'block';
-      } else if (section === 'grammar') {
-        document.querySelector('.grammar-container').style.display = 'block';
-        showGrammarLesson();
-      }
-    }
-    // Add event listener for back button in grammar section
-    document.getElementById('back-from-grammar').onclick = function(e) {
-      e.preventDefault();
-      document.querySelector('.grammar-container').style.display = 'none';
-      document.querySelector('.study-options').style.display = 'flex';
-    };
+    `);
 
     // List of grammar topics
     const grammarTopics = [
