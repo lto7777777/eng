@@ -1559,18 +1559,6 @@
         });
       }
 
-      // New Words Quiz
-      const newWordsQuizOption = document.getElementById('new-words-quiz-option');
-      if (newWordsQuizOption) {
-        newWordsQuizOption.addEventListener('click', () => {
-          document.querySelector('.study-options').style.display = 'none';
-          document.querySelector('.new-words-quiz-container').style.display = 'block';
-          document.querySelector('.flashcard-container').style.display = 'none';
-          document.querySelector('.quiz-container').style.display = 'none';
-          document.querySelector('.writing-container').style.display = 'none';
-          startNewWordsQuiz();
-        });
-      }
 
       // Back buttons
       document.querySelectorAll('.back-btn').forEach(btn => {
@@ -2039,8 +2027,8 @@
       // Load progress first
       loadProgress();
       
-      // Use all words from the dictionary
-      studyWords = [...koreanDictionary];
+      // Only include words that have a Vietnamese translation
+      studyWords = koreanDictionary.filter(w => w.translation && w.translation.trim());
       
       // Randomize order so cards feel less predictable
       for (let i = studyWords.length - 1; i > 0; i--) {
@@ -2990,23 +2978,23 @@
       const usedValues = new Set([correctWord[field]]);
       
       // Try to get words from the same category if possible
-      const sameCategory = koreanDictionary.filter(word => 
-        word !== correctWord && 
+      const sameCategory = koreanDictionary.filter(word =>
+        word !== correctWord &&
         word.categories.some(cat => correctWord.categories.includes(cat))
       );
-      
+
       // If we have enough words in the same category, use them
       if (sameCategory.length >= 3) {
         for (let i = 0; i < 3; i++) {
           let randomIndex = Math.floor(Math.random() * sameCategory.length);
           let optionValue = sameCategory[randomIndex][field];
-          
+
           // Ensure we don't use duplicates
           while (usedValues.has(optionValue)) {
             randomIndex = (randomIndex + 1) % sameCategory.length;
             optionValue = sameCategory[randomIndex][field];
           }
-          
+
           incorrectOptions.push(optionValue);
           usedValues.add(optionValue);
         }
@@ -3304,16 +3292,12 @@
       
       // Helper to check if a word has (or can have) a Vietnamese meaning
       const hasMeaning = (word) => {
-        const key = (word.korean || '').toLowerCase();
-        return !!(
-          (word.translation && word.translation.trim()) ||
-          viMeaningCache[key]
-        );
+        return !!(word.translation && word.translation.trim());
       };
-      
+
       // Get all words that haven't been studied yet and have a meaning
       let newWords = koreanDictionary.filter(word => !studyProgress[word.korean] && hasMeaning(word));
-      
+
       // If no such words, fall back to all words that have a meaning
       if (newWords.length === 0) {
         newWords = koreanDictionary.filter(hasMeaning);
@@ -3348,31 +3332,11 @@
       const questionText = document.getElementById('new-words-question-text');
       const questionHint = document.getElementById('new-words-question-hint');
       
-      const key = (word.korean || '').toLowerCase();
-      let viMeaning =
-        (word.translation && word.translation.trim()) ||
-        viMeaningCache[key];
-      
-      // If meaning missing, fetch it on the fly
-      if (!viMeaning) {
-        questionText.textContent = 'Đang tải nghĩa tiếng Việt...';
-        questionHint.textContent = '';
-        
-        fetchVietnameseMeaning(word.korean || word.word).then(result => {
-          const resolved =
-            result ||
-            VI_FALLBACK;
-          word.translation = result || word.translation;
-          if (newWordsQuizWords[newWordsCurrentQuestionIndex] === word) {
-            questionText.textContent = `Tiếng Anh của nghĩa tiếng Việt sau là gì? "${resolved}"`;
-            questionHint.textContent = 'Chọn đúng từ tiếng Anh.';
-          }
-        });
-      } else {
-        questionText.textContent = `Tiếng Anh của nghĩa tiếng Việt sau là gì? "${viMeaning}"`;
-        questionHint.textContent = 'Chọn đúng từ tiếng Anh.';
-      }
-      
+      const viMeaning = word.translation && word.translation.trim();
+
+      questionText.textContent = `Tiếng Anh của nghĩa tiếng Việt sau là gì? "${viMeaning}"`;
+      questionHint.textContent = 'Chọn đúng từ tiếng Anh.';
+
       // Build options: English words
       const incorrectOptions = getIncorrectOptions(word, 'korean');
       const allOptions = shuffleArray([word.korean, ...incorrectOptions]);
@@ -3522,57 +3486,7 @@
       document.getElementById('next-new-words-btn').addEventListener('click', nextNewWordsQuestion);
     });
 
-    // Add grammar and sentence practice functionality
-    const sentenceQuizBank = [
-      // Present Tense
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'I study Korean'", words: ["저는", "한국어를", "공부해요"], correct: "저는 한국어를 공부해요", translation: "I study Korean", wordExplanations: ["저는 = I", "한국어를 = Korean (object)", "공부해요 = study"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'You play soccer'", words: ["당신은", "축구를", "해요"], correct: "당신은 축구를 해요", translation: "You play soccer", wordExplanations: ["당신은 = You", "축구를 = soccer (object)", "해요 = play/do"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'She drinks milk'", words: ["그녀는", "우유를", "마셔요"], correct: "그녀는 우유를 마셔요", translation: "She drinks milk", wordExplanations: ["그녀는 = She", "우유를 = milk (object)", "마셔요 = drinks"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'We read books'", words: ["우리는", "책을", "읽어요"], correct: "우리는 책을 읽어요", translation: "We read books", wordExplanations: ["우리는 = We", "책을 = book (object)", "읽어요 = read"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'He eats rice'", words: ["그는", "밥을", "먹어요"], correct: "그는 밥을 먹어요", translation: "He eats rice", wordExplanations: ["그는 = He", "밥을 = rice (object)", "먹어요 = eats"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'They watch TV'", words: ["그들은", "텔레비전을", "봐요"], correct: "그들은 텔레비전을 봐요", translation: "They watch TV", wordExplanations: ["그들은 = They", "텔레비전을 = TV (object)", "봐요 = watch"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'I listen to music'", words: ["저는", "음악을", "들어요"], correct: "저는 음악을 들어요", translation: "I listen to music", wordExplanations: ["저는 = I", "음악을 = music (object)", "들어요 = listen"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'You write a letter'", words: ["당신은", "편지를", "써요"], correct: "당신은 편지를 써요", translation: "You write a letter", wordExplanations: ["당신은 = You", "편지를 = letter (object)", "써요 = write"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'We make bread'", words: ["우리는", "빵을", "만들어요"], correct: "우리는 빵을 만들어요", translation: "We make bread", wordExplanations: ["우리는 = We", "빵을 = bread (object)", "만들어요 = make"] },
-      { level: 1, grammar: "Present Tense", prompt: "Make a sentence: 'She opens the door'", words: ["그녀는", "문을", "열어요"], correct: "그녀는 문을 열어요", translation: "She opens the door", wordExplanations: ["그녀는 = She", "문을 = door (object)", "열어요 = opens"] },
-      // Past Tense
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'I ate breakfast'", words: ["저는", "아침을", "먹었어요"], correct: "저는 아침을 먹었어요", translation: "I ate breakfast", wordExplanations: ["저는 = I", "아침을 = breakfast (object)", "먹었어요 = ate"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'He went home'", words: ["그는", "집에", "갔어요"], correct: "그는 집에 갔어요", translation: "He went home", wordExplanations: ["그는 = He", "집에 = home (object)", "갔어요 = went"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'They watched a movie'", words: ["그들은", "영화를", "봤어요"], correct: "그들은 영화를 봤어요", translation: "They watched a movie", wordExplanations: ["그들은 = They", "영화를 = movie (object)", "봤어요 = watched"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'We met yesterday'", words: ["우리는", "어제", "만났어요"], correct: "우리는 어제 만났어요", translation: "We met yesterday", wordExplanations: ["우리는 = We", "어제 = yesterday (object)", "만났어요 = met"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'She bought shoes'", words: ["그녀는", "신발을", "샀어요"], correct: "그녀는 신발을 샀어요", translation: "She bought shoes", wordExplanations: ["그녀는 = She", "신발을 = shoes (object)", "샀어요 = bought"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'You wrote a letter'", words: ["당신은", "편지를", "썼어요"], correct: "당신은 편지를 썼어요", translation: "You wrote a letter", wordExplanations: ["당신은 = You", "편지를 = letter (object)", "썼어요 = wrote"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'I read a book'", words: ["저는", "책을", "읽었어요"], correct: "저는 책을 읽었어요", translation: "I read a book", wordExplanations: ["저는 = I", "책을 = book (object)", "읽었어요 = read"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'We made bread'", words: ["우리는", "빵을", "만들었어요"], correct: "우리는 빵을 만들었어요", translation: "We made bread", wordExplanations: ["우리는 = We", "빵을 = bread (object)", "만들었어요 = made"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'He closed the door'", words: ["그는", "문을", "닫았어요"], correct: "그는 문을 닫았어요", translation: "He closed the door", wordExplanations: ["그는 = He", "문을 = door (object)", "닫았어요 = closed"] },
-      { level: 2, grammar: "Past Tense", prompt: "Make a sentence: 'She drank milk'", words: ["그녀는", "우유를", "마셨어요"], correct: "그녀는 우유를 마셨어요", translation: "She drank milk", wordExplanations: ["그녀는 = She", "우유를 = milk (object)", "마셨어요 = drank"] },
-      // Future Tense
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'I will call you'", words: ["제가", "당신에게", "전화할 거예요"], correct: "제가 당신에게 전화할 거예요", translation: "I will call you", wordExplanations: ["제가 = I", "당신에게 = you (object)", "전화할 거예요 = will call"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'She will study tomorrow'", words: ["그녀는", "내일", "공부할 거예요"], correct: "그녀는 내일 공부할 거예요", translation: "She will study tomorrow", wordExplanations: ["그녀는 = She", "내일 = tomorrow (object)", "공부할 거예요 = will study"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'We will travel to Korea'", words: ["우리는", "한국에", "여행할 거예요"], correct: "우리는 한국에 여행할 거예요", translation: "We will travel to Korea", wordExplanations: ["우리는 = We", "한국에 = Korean (object)", "여행할 거예요 = will travel"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'He will buy a car'", words: ["그는", "차를", "살 거예요"], correct: "그는 차를 살 거예요", translation: "He will buy a car", wordExplanations: ["그는 = He", "차를 = car (object)", "살 거예요 = will buy"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'They will meet tomorrow'", words: ["그들은", "내일", "만날 거예요"], correct: "그들은 내일 만날 거예요", translation: "They will meet tomorrow", wordExplanations: ["그들은 = They", "내일 = tomorrow (object)", "만날 거예요 = will meet"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'I will eat dinner'", words: ["저는", "저녁을", "먹을 거예요"], correct: "저는 저녁을 먹을 거예요", translation: "I will eat dinner", wordExplanations: ["저는 = I", "저녁을 = dinner (object)", "먹을 거예요 = will eat"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'You will write a letter'", words: ["당신은", "편지를", "쓸 거예요"], correct: "당신은 편지를 쓸 거예요", translation: "You will write a letter", wordExplanations: ["당신은 = You", "편지를 = letter (object)", "쓸 거예요 = will write"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'We will make bread'", words: ["우리는", "빵을", "만들 거예요"], correct: "우리는 빵을 만들 거예요", translation: "We will make bread", wordExplanations: ["우리는 = We", "빵을 = bread (object)", "만들 거예요 = will make"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'She will open the door'", words: ["그녀는", "문을", "열 거예요"], correct: "그녀는 문을 열 거예요", translation: "She will open the door", wordExplanations: ["그녀는 = She", "문을 = door (object)", "열 거예요 = will open"] },
-      { level: 3, grammar: "Future Tense", prompt: "Make a sentence: 'He will drink milk'", words: ["그는", "우유를", "마실 거예요"], correct: "그는 우유를 마실 거예요", translation: "He will drink milk", wordExplanations: ["그는 = He", "우유를 = milk (object)", "마실 거예요 = will drink"] },
-      // Negation
-      { level: 2, grammar: "Negation", prompt: "Make a sentence: 'I don't like coffee'", words: ["저는", "커피를", "안 좋아해요"], correct: "저는 커피를 안 좋아해요", translation: "I don't like coffee", wordExplanations: ["저는 = I", "커피를 = coffee (object)", "안 좋아해요 = don't like"] },
-      { level: 2, grammar: "Negation", prompt: "Make a sentence: 'He doesn't eat meat'", words: ["그는", "고기를", "안 먹어요"], correct: "그는 고기를 안 먹어요", translation: "He doesn't eat meat", wordExplanations: ["그는 = He", "고기를 = meat (object)", "안 먹어요 = doesn't eat"] },
-      { level: 2, grammar: "Negation", prompt: "Make a sentence: 'We don't watch TV'", words: ["우리는", "텔레비전을", "안 봐요"], correct: "우리는 텔레비전을 안 봐요", translation: "We don't watch TV", wordExplanations: ["우리는 = We", "텔레비전을 = TV (object)", "안 봐요 = don't watch"] },
-      { level: 2, grammar: "Negation", prompt: "Make a sentence: 'She doesn't drink milk'", words: ["그녀는", "우유를", "안 마셔요"], correct: "그녀는 우유를 안 마셔요", translation: "She doesn't drink milk", wordExplanations: ["그녀는 = She", "우유를 = milk (object)", "안 마셔요 = doesn't drink"] },
-      { level: 2, grammar: "Negation", prompt: "Make a sentence: 'I don't write letters'", words: ["저는", "편지를", "안 써요"], correct: "저는 편지를 안 써요", translation: "I don't write letters", wordExplanations: ["저는 = I", "편지를 = letters (object)", "안 써요 = don't write"] },
-      { level: 2, grammar: "Negation", prompt: "Make a sentence: 'They don't make bread'", words: ["그들은", "빵을", "안 만들어요"], correct: "그들은 빵을 안 만들어요", translation: "They don't make bread", wordExplanations: ["그들은 = They", "빵을 = bread (object)", "안 만들어요 = don't make"] },
-      // Questions
-      { level: 2, grammar: "Questions", prompt: "Make a sentence: 'Where do you live?'", words: ["어디에", "살아요?", "당신은"], correct: "당신은 어디에 살아요?", translation: "Where do you live?", wordExplanations: ["어디에 = Where", "살아요? = are you living?", "당신은 = You"] },
-      { level: 2, grammar: "Questions", prompt: "Make a sentence: 'What are you doing?'", words: ["뭐", "하고", "있어요?"], correct: "뭐 하고 있어요?", translation: "What are you doing?", wordExplanations: ["뭐 = What", "하고 = and", "있어요? = are you doing?"] },
-      { level: 2, grammar: "Questions", prompt: "Make a sentence: 'When will you come?'", words: ["언제", "올", "거예요?"], correct: "언제 올 거예요?", translation: "When will you come?", wordExplanations: ["언제 = When", "올 = you (object)", "거예요? = will you come?"] },
-      { level: 2, grammar: "Questions", prompt: "Make a sentence: 'Who is coming?'", words: ["누가", "오고", "있어요?"], correct: "누가 오고 있어요?", translation: "Who is coming?", wordExplanations: ["누가 = Who", "오고 = are you coming?", "있어요? = are you coming?"] },
-      { level: 2, grammar: "Questions", prompt: "Make a sentence: 'Why are you laughing?'", words: ["왜", "웃고", "있어요?"], correct: "왜 웃고 있어요?", translation: "Why are you laughing?", wordExplanations: ["왜 = Why", "웃고 = are you laughing?", "있어요? = are you laughing?"] },
-      { level: 2, grammar: "Questions", prompt: "Make a sentence: 'How do you go to school?'", words: ["어떻게", "학교에", "가요?"], correct: "어떻게 학교에 가요?", translation: "How do you go to school?", wordExplanations: ["어떻게 = How", "학교에 = Korean (object)", "가요? = do you go to school?"] },
-      // Add more as needed for variety and challenge
-    ];
+    // Grammar and sentence practice uses sentenceQuizBank from sentence-quiz.js
 
     let userStreak = 0;
     let currentDifficulty = 1;
