@@ -1907,11 +1907,8 @@
       const activeFilter = document.querySelector('.filter.active');
       const selectedCategory = activeFilter.getAttribute('data-category');
       
-      // Filter words — only show words with a Vietnamese translation
+      // Filter words
       const filteredWords = koreanDictionary.filter(word => {
-        // Must have a Vietnamese translation
-        if (!word.translation || !word.translation.trim()) return false;
-
         // Check if matches search term
         const matchesSearch =
           !searchTerm ||
