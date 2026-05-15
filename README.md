@@ -2,7 +2,7 @@
 
 A Vietnamese–English vocabulary learning web app. Browse the Oxford 5000 dictionary, study with flashcards, practice with quizzes, and build sentences with grammar exercises.
 
-**Live demo:** https://YOUR-USERNAME.github.io/YOUR-REPO-NAME/
+**Live demo:** https://lto7777777.github.io/eng/
 
 ---
 
