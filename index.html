@@ -1442,7 +1442,22 @@
       plug: 'phích cắm; nút chặn',
       pole: 'cột; cực (Bắc/Nam)',
       poll: 'cuộc thăm dò; bầu cử',
-      pond: 'cái ao'
+      pond: 'cái ao',
+
+      // Words english-words.js shipped with no Vietnamese meaning at all. Without
+      // these the cards showed the "no meaning yet" fallback and fired a
+      // translation request on every page load.
+      // key must be lower-case: tableMeaning() lower-cases the word before lookup
+      aids: 'bệnh AIDS; hội chứng suy giảm miễn dịch',
+      cabin: 'ca-bin; nhà gỗ nhỏ',
+      cocktail: 'cocktail; rượu pha',
+      gallon: 'ga-lông (đơn vị đo thể tích)',
+      logic: 'logic; lô-gíc',
+      opera: 'nhạc kịch opera',
+      visa: 'thị thực; visa',
+
+      // Translation-API artifact in the source data: "CHEER /"
+      cheer: 'cổ vũ; reo hò'
     };
 
     // Per-language meaning tables, consulted before anything else.
@@ -1715,67 +1730,18 @@
 
         // Initialize dictionary display
         filterDictionary();
-        
-        // Initialize all UI components
-        console.log('Initializing UI components...');
-        initializeStudyMode();
-        initializeProgress();
-        setupStudyHandlers();
-        setupKeyboardShortcuts();
+
+        // Nothing else is initialised here on purpose. The study cards, flashcard
+        // and quiz controls are wired in the handler further down, and
+        // initializeProgress() runs from checkDictionary(). This block used to call
+        // initializeStudyMode() and setupKeyboardShortcuts(), neither of which
+        // exists; the ReferenceError aborted the rest of this handler.
       } else {
         console.error('Dictionary not loaded');
         alert('Error: Dictionary not loaded. Please refresh the page.');
       }
     });
 
-    // Set up study section handlers
-    function setupStudyHandlers() {
-      // Flashcards
-      const flashcardsOption = document.getElementById('flashcards-option');
-      if (flashcardsOption) {
-        flashcardsOption.addEventListener('click', () => {
-          document.querySelector('.study-options').style.display = 'none';
-          document.querySelector('.flashcard-container').style.display = 'block';
-          document.querySelector('.quiz-container').style.display = 'none';
-          document.querySelector('.new-words-quiz-container').style.display = 'none';
-          document.querySelector('.writing-container').style.display = 'none';
-          initializeFlashcards();
-        });
-      }
-
-      // Quiz
-      const quizOption = document.getElementById('quiz-option');
-      if (quizOption) {
-        quizOption.addEventListener('click', () => {
-          document.querySelector('.study-options').style.display = 'none';
-          document.querySelector('.quiz-container').style.display = 'block';
-          document.querySelector('.flashcard-container').style.display = 'none';
-          document.querySelector('.new-words-quiz-container').style.display = 'none';
-          document.querySelector('.writing-container').style.display = 'none';
-          startQuiz();
-        });
-      }
-
-
-      // Back buttons
-      document.querySelectorAll('.back-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelector('.study-options').style.display = 'flex';
-          document.querySelector('.flashcard-container').style.display = 'none';
-          document.querySelector('.quiz-container').style.display = 'none';
-          document.querySelector('.new-words-quiz-container').style.display = 'none';
-        });
-      });
-
-      // Set up navigation
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const targetId = link.getAttribute('href').substring(1);
-          showSection(targetId);
-        });
-      });
-    }
   </script>
   
   <script>
@@ -1877,11 +1843,9 @@
         });
       }
 
-      // Preload first 10 words
-      const preloadWords = koreanDictionary.slice(0, 10);
-      preloadWords.forEach(word => {
-        preloadAudio(word.korean);
-      });
+      // No mp3 preloading: there is no audio/ directory in the repo, so every
+      // request 404d on load. Pronunciation comes from playAudio() ->
+      // speechSynthesis. If audio files are added later, call preloadAudio() here.
 
       console.log('Audio system initialized');
     }
@@ -3314,8 +3278,6 @@
       } else {
         console.log('Some data handler elements not found, skipping setup');
       }
-      
-      document.getElementById('import-file').addEventListener('change', importProgress);
     }
     
     function exportProgress() {
