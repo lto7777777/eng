@@ -12,6 +12,7 @@ Meanings are shown in Vietnamese or Chinese (Simplified); the app chrome stays i
 - `zh-words.js`: Chinese meanings for the same word list, keyed by word (and `word|pos`).
 - `sentence-quiz.js`: Sentence quiz data for the Grammar & Sentences screen.
 - `The_Oxford_5000_by_CEFR_level.txt`: Source list used to regenerate dictionary data (not in the repo).
+- `tests/browser-test.js`: end-to-end checks in a real browser (needs Playwright; the app does not).
 - `quiz-types.js`, `style.css`: present but not loaded by `index.html`.
 
 ## Working Scope
@@ -56,7 +57,12 @@ Meanings are shown in Vietnamese or Chinese (Simplified); the app chrome stays i
   parsed wrong and has to be split.
 
 ## Validation Checklist
-After edits, verify in a browser, **in both `?lang=vi` and `?lang=zh`**:
+Run `node tests/browser-test.js` (71 checks, both languages). It must end `0 failed`,
+and that includes a **clean browser console** — fix the cause rather than adding an
+exception. It also proves the bundled meanings are complete, because it blocks the
+translation endpoints and asserts no word falls back.
+
+Then eyeball, **in both `?lang=vi` and `?lang=zh`**:
 - Sidebar navigation still switches sections correctly.
 - Dictionary search and category filters still update results/counts.
 - Dictionary loads non-empty data on first load, and no card shows the "no meaning yet" fallback.
@@ -66,17 +72,16 @@ After edits, verify in a browser, **in both `?lang=vi` and `?lang=zh`**:
   sentence is actually accepted.
 - Audio buttons do not throw runtime errors in the browser console.
 - Layout remains usable on mobile widths.
-- Compare console errors against the previous commit rather than reading them cold: the page has
-  pre-existing errors (see below), so "there are errors" says nothing on its own.
-
-## Known pre-existing issues
-- `index.html` calls `initializeStudyMode()` and `setupKeyboardShortcuts()`, neither of which exists.
-  The ReferenceError aborts the rest of that `DOMContentLoaded` handler; the study cards still work
-  because a second handler wires them again.
-- `setupDataHandlers()` adds a listener to an element that is not in the markup, throwing a
-  `TypeError` inside `initializeProgress()`.
-- The audio system requests `audio/<word>.mp3` files that are not in the repo; every one 404s and the
-  app falls back to speech synthesis.
+## Known dead code
+Not errors, but worth knowing before you touch this area:
+- `startNewWordsQuiz()` is defined, never called, and calls `startQuiz()`, which does not exist.
+  Wiring it up as-is would throw.
+- The mp3 audio pool (`queueAudio`, `playAudioItem`, `getAudioElement`, `processAudioQueue`) is
+  unreachable: `queueAudio()` has no callers. Pronunciation goes through `playAudio()` ->
+  `speechSynthesis`. The pool is kept in case audio files are added under `audio/`.
+- `quiz-types.js` and `style.css` are not loaded by `index.html`.
+- The Vietnamese gloss for `ID` is `bản ngã` (the Freudian id). The Oxford entry is `ID` meaning
+  identification, so this one is a mismatch; the Chinese side has `身份证明`.
 
 ## Notes
 `index.html` currently contains substantial inline CSS/JS. For larger refactors, prefer extracting in

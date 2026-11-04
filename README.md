@@ -55,6 +55,17 @@ No server or install needed, and it works with no internet connection.
 | `english-words.js` | Word list with Vietnamese meanings |
 | `zh-words.js` | Chinese meanings for the same word list |
 | `sentence-quiz.js` | Grammar sentence bank, per language |
+| `tests/` | Browser checks (Playwright). Not needed to use the app. |
+
+## Tests
+
+```
+npm install playwright && npx playwright install chromium
+node tests/browser-test.js
+```
+
+71 checks across both languages: every study mode, the switcher, storage isolation,
+and a clean browser console. See `tests/README.md`.
 
 ## Adding another language
 
