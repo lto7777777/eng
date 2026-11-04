@@ -9472,10 +9472,23 @@ const englishDictionary = [
     "example": ""
   },
   {
-    "word": "trillion number troop",
-    "korean": "trillion number troop",
-    "pronunciation": "trillion number troop",
-    "translation": "quân số nghìn tỷ",
+    "word": "trillion",
+    "korean": "trillion",
+    "pronunciation": "trillion",
+    "translation": "nghìn tỷ",
+    "pos": [
+      "number"
+    ],
+    "partOfSpeech": "number",
+    "categories": "Common",
+    "cefr": "B2",
+    "example": ""
+  },
+  {
+    "word": "troop",
+    "korean": "troop",
+    "pronunciation": "troop",
+    "translation": "quân đội; đoàn quân",
     "pos": [
       "n"
     ],
